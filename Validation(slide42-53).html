@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to my CCSW321 Website</title>
+
+  <style>
+    body {
+      font-family: "Times New Roman", Times, serif;
+      margin: 30px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    div {
+      margin-bottom: 12px;
+    }
+
+    label[for='fname'],
+    #mobileLabel,
+    #emailLabel {
+      display: inline-block;
+      width: 110px;
+    }
+
+    /* the error messages produced by the JS validation layer */
+    #msg {
+      color: red;
+      font-weight: bold;
+      max-width: 420px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Welcome to my CCSW321 Website</h1>
+
+  <!--
+       'novalidate' turns the browser's own HTML5 checking off, so the
+       JavaScript validation layer below is the one doing the work.
+  -->
+  <form method="GET" action="" autocomplete="on" id='myform' name='myform' novalidate>
+    <section>
+
+      <!-- First name -->
+      <div>
+        <label for='fname'>First Name (*):</label>
+        <input type="text" id='fname' name="fname" maxlength="25"
+               placeholder="e.g., Moayad" autofocus pattern="[A-Za-z ]+">
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label id='emailLabel' for='email'>Email (*):</label>
+        <input id='email' type="email" name="email"
+               placeholder="e.g., moayad@gmail.com" size='25'>
+      </div>
+
+      <!-- Mobile -->
+      <div>
+        <label id='mobileLabel' for='mobile'>Mobile:</label>
+        <select name='countrycode'>
+          <option>+534</option>
+          <option selected>+966</option>
+          <option>+1</option>
+        </select>
+        <input id='mobile' type="tel" name="mobile" placeholder="507666666"
+               minlength="9" maxlength="9">
+      </div>
+
+      <!-- How did you hear about us? -->
+      <div id='hear'>
+        <p>How did you hear about us?</p>
+        <input type="radio" id='r1' name="aboutus" value='Google'>
+        <label for='r1'>Google</label>
+
+        <input type="radio" id='r2' name="aboutus" value='TV'>
+        <label for='r2'>TV</label>
+
+        <input type="radio" id='r3' name="aboutus" value='Friend'>
+        <label for='r3'>Friend</label>
+      </div>
+
+      <!-- error messages + buttons -->
+      <div>
+        <p id='msg'></p>
+        <input type="submit" value="Submit">
+        <input type="reset" value="Reset">
+      </div>
+
+    </section>
+  </form>
+
+  <script>
+    /* ==========================================================
+       CCSW321 - JavaScript for Web Development (Part 5.1)
+       Task 2 : Data Validation Layer  (Slides 42 - 53)
+       ========================================================== */
+
+    /* ---------- selection ---------- */
+    const form = document.querySelector("#myform");
+    const msg  = document.querySelector("#msg");
+
+    /* ==========================================================
+       Validation functions
+       Each one receives the array of messages, pushes an error
+       message into it if the check fails, and returns the array.
+       ========================================================== */
+
+    /* --- Presence validation: the field must not be empty --- */
+    function isFilled(selector, messages, msg) {
+      const element = document.getElementsByName(selector)[0].value.trim();
+      if (element.length < 1) {
+        messages.push(msg);
+      }
+      return messages;
+    }
+
+    /* --- Format validation: the email must match the expected pattern --- */
+    function isEmail(selector, messages, msg) {
+      const element = document.getElementsByName(selector)[0].value.trim();
+      // ^ and $ are used so the WHOLE value must match, not just a part of it
+      if (!element.match("^[a-z0-9._-]+@[a-z]+\\.[a-z]{2,4}$")) {
+        messages.push(msg);
+      }
+      return messages;
+    }
+
+    /* --- Data type + length validation: 9 digits, numbers only --- */
+    function isMobile(selector, messages, msg) {
+      const element = document.getElementsByName(selector)[0].value.trim();
+      if (!element.match("^[0-9]{9}$")) {
+        messages.push(msg);
+      }
+      return messages;
+    }
+
+    /* --- Format validation: English letters only --- */
+    function isAlpha(selector, messages, msg) {
+      const element = document.getElementsByName(selector)[0].value.trim();
+      if (!element.match("^[A-Za-z ]+$")) {
+        messages.push(msg);
+      }
+      return messages;
+    }
+
+    /* --- Length validation: value must be between min and max chars --- */
+    function isLength(selector, min, max, messages, msg) {
+      const element = document.getElementsByName(selector)[0].value.trim();
+      if (element.length < min || element.length > max) {
+        messages.push(msg);
+      }
+      return messages;
+    }
+
+    /* --- Whitelist validation: the value must be one of the accepted ones ---
+       For a group of radio buttons we must read the CHECKED one, otherwise we
+       would always read the value of the first radio button in the group.     */
+    function isWhiteListed(selector, whitelist, messages, msg) {
+      const checked = document.querySelector("input[name='" + selector + "']:checked");
+      const element = checked ? checked.value.trim() : "";
+      if (!whitelist.includes(element)) {
+        messages.push(msg);
+      }
+      return messages;
+    }
+
+    /* ==========================================================
+       The event listener: runs when 'Submit' is clicked and
+       BEFORE the data is sent to the backend.
+       ========================================================== */
+    form.addEventListener('submit', e => {
+
+      // this array will contain the error messages
+      let messages = [];
+
+      // check if errors exist
+      messages = isFilled("fname", messages, "First name is missing");
+      messages = isAlpha("fname", messages, "First name must contain letters only");
+      messages = isLength("fname", 2, 25, messages, "First name must be between 2 and 25 characters");
+
+      messages = isFilled("email", messages, "Email is missing");
+      messages = isEmail("email", messages, "Email format is wrong");
+
+      messages = isFilled("mobile", messages, "Mobile is missing");
+      messages = isMobile("mobile", messages, "Mobile must contain 9 numbers only");
+
+      const whitelist = ['Google', 'TV', 'Friend'];
+      messages = isWhiteListed("aboutus", whitelist, messages, "Selection is invalid");
+
+      // if a message is found, then there's an issue
+      if (messages.length > 0) {
+        // there is an error -> show it to the user
+        msg.innerHTML = "Issues found [" + messages.length + "]: " + messages.join(", ") + ".";
+        // prevent submit
+        e.preventDefault();
+      } else {
+        // no errors -> clear the message and let the form go to the backend
+        msg.innerHTML = "";
+      }
+    });
+  </script>
+</body>
+
+</html>
